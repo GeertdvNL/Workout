@@ -99,6 +99,8 @@ body{font-family:var(--sans);color:var(--text);min-height:100vh;max-width:480px;
 .hist-pills{display:flex;flex-wrap:wrap;gap:4px;}
 .hpill{font-family:var(--mono);font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 7px;color:var(--text2);}
 .hist-note{font-size:11px;color:var(--text3);font-style:italic;margin-top:3px;line-height:1.4;}
+.hist-del{padding:5px 10px;background:none;border:1px solid rgba(224,80,80,.25);color:var(--danger);border-radius:6px;font-family:var(--mono);font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.hist-del:active{background:rgba(224,80,80,.1);}
 .settings-hdr{padding:16px 16px 12px;border-bottom:1px solid var(--border);}
 .settings-hdr h2{font-size:16px;font-weight:500;}
 .settings-day-tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
@@ -251,7 +253,7 @@ function mkRow(ei,si,dayKey,ps){
   var p=ps&&ps[si];
   var wV=sd?(sd.weight||''):'',rV=sd?(sd.reps||''):'',rpeV=sd?(sd.rpe||''):'',done=sd?(sd.done||false):false;
   var ph=(p&&p.weight)?p.weight:'-';
-  var opts=['','6','6.5','7','7.5','8','8.5','9','9.5','10'];
+  var opts=['','1','2','3','4','5','6','7','8','9','10'];
   var sel=opts.map(function(v){return '<option value="'+v+'"'+(rpeV===v?' selected':'')+'>'+(v===''?'-':v)+'</option>';}).join('');
   var dk="'"+dayKey+"'";
   return '<div class="set-row" id="sr_'+ei+'_'+si+'">'
@@ -364,7 +366,8 @@ function renderHistory(){
   var html=tabs;
   if(!f.length){html+='<div class="hist-empty">Nog geen trainingen opgeslagen.</div>';}
   else{f.forEach(function(s){
-    html+='<div class="hist-entry"><div class="hist-top"><div><div class="hist-name">'+s.dayTitle+'</div><div class="hist-meta">Week '+s.week+' Blok '+s.block+' '+s.setsLogged+' sets</div></div><div class="hist-date">'+s.date+'</div></div>';
+    var realIdx=h.indexOf(s);
+    html+='<div class="hist-entry"><div class="hist-top"><div><div class="hist-name">'+s.dayTitle+'</div><div class="hist-meta">Week '+s.week+' Blok '+s.block+' '+s.setsLogged+' sets</div></div><div style="display:flex;align-items:center;gap:8px;"><div class="hist-date">'+s.date+'</div><button class="hist-del" onclick="delSession('+realIdx+')">&#10005;</button></div></div>';
     s.exercises.forEach(function(ex){if(ex.pills&&ex.pills.length){html+='<div class="hist-ex"><div class="hist-exname">'+ex.name+'</div><div class="hist-pills">'+ex.pills.map(function(p){return '<span class="hpill">'+p+'</span>';}).join('')+'</div>'+(ex.note?'<div class="hist-note">'+ex.note+'</div>':'')+'</div>';}});
     html+='</div>';
   });}
@@ -453,6 +456,14 @@ function impBK(event){
 }
 function showBKSt(msg,type){var el=document.getElementById('bkst');if(!el)return;el.textContent=msg;el.className='backup-status'+(type?' '+type:'');setTimeout(function(){if(el)el.textContent='';},4000);}
 
+function delSession(idx){
+  if(!confirm('Training verwijderen?'))return;
+  var h=lsG('wt_history',[]);
+  h.splice(idx,1);
+  lsS('wt_history',h);
+  updateStats();
+  renderHistory();
+}
 function showInstall(){
   if(lsG('wt_no_install',false))return;
   if(window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone)return;
